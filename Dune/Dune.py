@@ -4,11 +4,12 @@ from random import randint
 
 class Arc:
     def __init__(self, canvas):
-        self.x = 700
+        self.x = 800
         self.y = 500
-        self.deltaX = 300
-        self.deltaY = 200
+        self.deltaX = randint(50,400)
+        self.deltaY = 250
         self.duneCanvas = canvas
+        self.velocity = -2
         self.drawArc()
     
     def drawArc(self):
@@ -17,9 +18,13 @@ class Arc:
             self.y,
             self.x + self.deltaX,
             self.y + self.deltaY,
-            start=-150, extent=120, style=tk.ARC)
+            start=-180, extent=180, style=tk.ARC)
         self.duneCanvas.create_text(self.x, self.y, text="X")
         self.duneCanvas.create_text(self.x+self.deltaX, self.y+self.deltaY, text="X")
+
+    def move(self):
+        self.duneCanvas.move(self.canvObj, self.velocity, 0)
+        self.x += self.velocity
         
 
 
@@ -50,13 +55,21 @@ class Dune:
         self.frame.pack()
         self.canvas.pack()
         self.canvas.focus_set()
+        self.spawnNewArc()
 
         self.refreshAgain = True
         self.refresh()
 
     def refresh(self):
         for arc in self.arcs:
-            self.canvas.move(arc.canvObj, -1, 0)
+            arc.move()
+            if arc.x + arc.deltaX < 0:
+                self.canvas.delete(arc.canvObj)
+                del arc
+
+        recentArc = self.arcs[-1]
+        if recentArc.x+ recentArc.deltaX <800:
+            self.spawnNewArc()
 
 
         self.master.update()
