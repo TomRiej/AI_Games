@@ -12,9 +12,9 @@ class Util:
         self.mainCanvas = canvas
         self.x = x
         self.y = y
-        self.size = size
+        self.sizeX = size
+        self.sizeY = size
         self.colour = colour
-        self.draw()
     
     def draw(self):
         self.canvasObject = self.mainCanvas.create_rectangle(self.getDims(),fill=self.colour)
@@ -22,8 +22,8 @@ class Util:
     def getDims(self):
         x1 = self.x
         y1 = self.y
-        x2 = self.x + self.size
-        y2 = self.y + self.size
+        x2 = self.x + self.sizeX
+        y2 = self.y + self.sizeY
         return x1, y1, x2, y2
 
 # =============== PLAYER =======================
@@ -32,6 +32,7 @@ class Player(Util):
         # inherit needed atributes
         super().__init__(canvas, x, y, size, colour)
         self.yVel = 0
+        self.draw()
 
     def fall(self):
         self.mainCanvas.move(self.canvasObject, 0, self.yVel)
@@ -39,8 +40,10 @@ class Player(Util):
         self.yVel += GRAVITY
     
     def moveHorizontal(self, direction):
-        self.mainCanvas.move(self.canvasObject, direction*MOVEMENT_SPEED, 0)
-        self.x += direction*MOVEMENT_SPEED
+        step = direction*MOVEMENT_SPEED
+        if self.x  + self.sizeX + step < int(SIZE) and self.x + step > 0:
+            self.mainCanvas.move(self.canvasObject, direction*MOVEMENT_SPEED, 0)
+            self.x += direction*MOVEMENT_SPEED
 
     def jump(self):
         self.yVel = 0
@@ -57,12 +60,35 @@ class Player(Util):
     def changeColour(self, colour):
         self.mainCanvas.itemconfig(self.canvasObject, fill=colour)
 
+    def FindClosestFloor(self, platforms):
+        midpointX = self.x + (self.sizeX//2)
+        midpointY = self.y + (self.sizeY//2)
+        viableFloors = []
+        for platform in platforms:
+            if midpointX >= platform.x and midpointX <= platform.x + platform.sizeX:
+                if platform.y - midpointY >= 0:
+                    viableFloors.append(platform.y)
+        if len(viableFloors) > 0:
+            return min(viableFloors)
+        else:
+            return None
+
 
 # =============== COLOUR CHANGER =======================
 class ColourChanger(Util):
     def __init__(self, canvas, x, y, size, colour):
         super().__init__(canvas,x, y, size, colour)
+        self.draw()
         
+
+# =============== PLATFORM =======================
+class Platform(Util):
+    def __init__(self, canvas, x, y, sizeX, sizeY, colour):
+        super().__init__(canvas, x, y, sizeX, colour)
+        self.sizeX = sizeX
+        self.sizeY = sizeY
+        self.draw()
+
 
 # =============== MAIN APP =======================
 class App:
@@ -102,6 +128,13 @@ class App:
         newChanger = ColourChanger(self.canvas, x, y, size, colour)
         self.changers.append(newChanger)
 
+    def spawnPlatform(self, colour):
+        x = 400
+        y = 600
+        sizeX = 100
+        sizeY = 20
+        newPlatform = Platform(self.canvas, x, y, sizeX, sizeY, colour)
+        self.platforms.append(newPlatform)
 
 
     def draw(self):
@@ -119,8 +152,12 @@ class App:
         for i in range(7):
             self.spawnColourChanger(i)
 
+        # Initialise Platforms
+        self.platforms = []
+        self.spawnPlatform("grey")
+
         # Initialise Variables
-        self.floor = int(SIZE)-self.players[0].size
+        self.floor = int(SIZE)-self.players[0].sizeY
         self.direction = 0
         
 
@@ -132,6 +169,14 @@ class App:
     def refresh(self):
         # player logic
         for player in self.players:
+            # Find Floor below player
+            floor = player.FindClosestFloor(self.platforms)
+            if floor != None:
+                self.floor = floor - player.sizeY
+                
+            else:
+                self.floor = int(SIZE)-player.sizeY
+            
             # gravity:
             if player.y < self.floor:
                 player.fall()
