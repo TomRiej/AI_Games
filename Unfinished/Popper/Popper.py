@@ -52,7 +52,11 @@ class Player(Util):
         dims = self.getDims()
         collisions = self.mainCanvas.find_overlapping(dims[0],dims[1],dims[2],dims[3])
         if len(collisions) > 1:
-            self.mainCanvas.delete(collisions[1])
+            return collisions[0:]
+
+    def changeColour(self, colour):
+        self.mainCanvas.itemconfig(self.canvasObject, fill=colour)
+
 
 # =============== COLOUR CHANGER =======================
 class ColourChanger(Util):
@@ -141,7 +145,11 @@ class App:
             player.moveHorizontal(self.direction)
 
             #collision detection
-            player.checkCollisions()
+            collisions = player.checkCollisions()
+            if collisions != None:
+                for changer in self.changers:
+                    if changer.canvasObject in collisions:
+                        player.changeColour(changer.colour)
         
         # # colour logic
         # if self.refreshCount % 50 == 0:
