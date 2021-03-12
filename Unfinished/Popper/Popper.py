@@ -94,7 +94,7 @@ class Platform(Util):
 class App:
     def __init__(self, master):
         self.master = master
-        self.master.title("App Name")
+        self.master.title("Popper")
         self.master.geometry(SIZE+"x"+SIZE)
 
         # Initialising Tkinter Variables
@@ -111,14 +111,14 @@ class App:
             self.direction = 1
         elif event.char == "s":
             self.direction = 0
-        if event.char == "w":
-            if self.players[0].y ==self.floor:
-                self.players[0].jump()
+        elif event.char == "w":
+            if self.player.y == self.floor:
+                self.player.jump()
 
 
     def spawnPlayer(self):
         newPlayer = Player(self.canvas, 400, 400, 50, "grey")
-        self.players.append(newPlayer)
+        self.player = newPlayer
 
     def spawnColourChanger(self, c):
         size = 30
@@ -128,13 +128,20 @@ class App:
         newChanger = ColourChanger(self.canvas, x, y, size, colour)
         self.changers.append(newChanger)
 
-    def spawnPlatform(self, colour):
-        x = 400
-        y = 600
-        sizeX = 100
-        sizeY = 20
+    def spawnPlatform(self, x, y, sizeX, sizeY, colour):
         newPlatform = Platform(self.canvas, x, y, sizeX, sizeY, colour)
         self.platforms.append(newPlatform)
+
+    def makeRdmPlatform(self):
+        x = randint(0, int(SIZE))
+        if self.player.y-100 > 0:
+            y = randint(int(self.player.y)-100, int(self.player.y))
+        else:
+            y = randint(0,int(self.player.y))
+        sizeX = randint(50,200)
+        sizeY = 20
+        colour = COLOURS[randint(0,6)]
+        self.spawnPlatform(x, y, sizeX, sizeY, colour)
 
 
     def draw(self):
@@ -144,20 +151,18 @@ class App:
         self.canvas.focus_set()
 
         # Initialise players
-        self.players = []
         self.spawnPlayer()
 
         # Initialise changers
         self.changers = []
-        for i in range(7):
+        for i in range(0,7):
             self.spawnColourChanger(i)
 
         # Initialise Platforms
         self.platforms = []
-        self.spawnPlatform("grey")
 
         # Initialise Variables
-        self.floor = int(SIZE)-self.players[0].sizeY
+        self.floor = int(SIZE)-self.player.sizeY
         self.direction = 0
         
 
@@ -168,37 +173,37 @@ class App:
 
     def refresh(self):
         # player logic
-        for player in self.players:
-            # Find Floor below player
-            floor = player.FindClosestFloor(self.platforms)
-            if floor != None:
-                self.floor = floor - player.sizeY
-                
-            else:
-                self.floor = int(SIZE)-player.sizeY
-            
-            # gravity:
-            if player.y < self.floor:
-                player.fall()
-            else:
-                # if player is below bottom of screen: move to bottom
-                difference = self.floor - player.y
-                self.canvas.move(player.canvasObject, 0 , difference)
-                player.y += difference
-
-            # Horrizontal movement
-            player.moveHorizontal(self.direction)
-
-            #collision detection
-            collisions = player.checkCollisions()
-            if collisions != None:
-                for changer in self.changers:
-                    if changer.canvasObject in collisions:
-                        player.changeColour(changer.colour)
         
-        # # colour logic
+        # Find Floor below player
+        floor = self.player.FindClosestFloor(self.platforms)
+        if floor != None:
+            self.floor = floor - self.player.sizeY
+                
+        else:
+            self.floor = int(SIZE)-self.player.sizeY
+            
+        # gravity:
+        if self.player.y < self.floor:
+            self.player.fall()
+        else:
+            # if player is below bottom of screen: move to bottom
+            difference = self.floor - self.player.y
+            self.canvas.move(self.player.canvasObject, 0 , difference)
+            self.player.y += difference
+
+        # Horrizontal movement
+        self.player.moveHorizontal(self.direction)
+
+        #collision detection
+        collisions = self.player.checkCollisions()
+        if collisions != None:
+            for changer in self.changers:
+                if changer.canvasObject in collisions:
+                    self.player.changeColour(changer.colour)
+        
+        # Platform creation
         # if self.refreshCount % 50 == 0:
-        #     self.spawnColourChanger()
+        #     self.makeRdmPlatform()
             
 
         self.master.update()

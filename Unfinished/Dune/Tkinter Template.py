@@ -1,5 +1,5 @@
 import tkinter as tk
-from random import randint
+
 
 class App:
     def __init__(self, master):
@@ -15,11 +15,16 @@ class App:
     def onSpace(self, event):
         print("space")
 
-    def draw(self):
+    def setup(self):
         # Initialise canvas
         self.frame.pack()
         self.canvas.pack()
         self.canvas.focus_set()
+
+    def update(self):
+        self.canvas.delete("all")
+        # draw everything this frame
+        self.master.after(1, self.update)
 
 SIZE = "800"
 
@@ -27,6 +32,7 @@ if __name__ == '__main__':
     root = tk.Tk()
 
     app = App(root)
-    app.draw()
+    app.setup()
+    app.update()
 
     root.mainloop()
